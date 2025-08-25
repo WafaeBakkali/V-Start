@@ -49,7 +49,7 @@ Follow these instructions to get a copy of the project up and running on your lo
 
 1.  **Clone the repository:**
     ```bash
-    git clone <your-repository-url>
+    git clone https://github.com/WafaeBakkali/V-Start.git
     cd V-Start
     ```
 
@@ -72,7 +72,7 @@ Follow these instructions to get a copy of the project up and running on your lo
 
 5.  Open your browser and navigate to `http://localhost:8080`.
 
-## ☁️ Deployment to Cloud Run
+## ☁️ Deployment to Cloud Run 
 
 The recommended way to deploy this application is directly from source to Google Cloud Run, secured with Identity-Aware Proxy (IAP). When you deploy from source, Cloud Build automatically uses the `Dockerfile` in your repository to build and deploy your container.
 
@@ -84,6 +84,7 @@ The recommended way to deploy this application is directly from source to Google
 ### Step 1: Project Setup (One-Time)
 
 Run these commands to set your project and enable the necessary APIs.
+
 ```bash
 # Set your project ID
 export PROJECT_ID="your-gcp-project-id"
@@ -91,3 +92,58 @@ gcloud config set project $PROJECT_ID
 
 # Enable required services
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com iap.googleapis.com
+```
+
+### Step 2: Secure Your API Key (One-Time)
+
+Store your Gemini API key in Secret Manager.
+
+```bash
+# Create the secret
+gcloud secrets create gemini-api-key --replication-policy="automatic"
+
+# Add your API key value to the secret
+printf "your_gemini_api_key_here" | gcloud secrets versions add gemini-api-key --data-file=-
+```
+
+### Step 3: Configure OAuth Consent Screen (One-Time)
+
+This is required for IAP. In the Google Cloud Console, navigate to **APIs & Services → OAuth consent screen** and complete the setup wizard.
+
+### Step 4: Deploy the Service
+
+Deploy the application as a private service.
+
+```bash
+gcloud run deploy veo-start-app \
+  --source . \
+  --region us-central1 \
+  --no-allow-unauthenticated \
+  --set-env-vars="API_KEY=sm://${PROJECT_ID}/gemini-api-key/latest"
+```
+
+### Step 5: Grant Access Permissions
+
+After deploying, make sure to enforce IAP by granting access permissions to authorized users or groups. For detailed instructions, please follow the official documentation.
+
+**Official Guide**: [Securing Cloud Run services with IAP](https://cloud.google.com/iap/docs/enabling-cloud-run)
+
+## 🔐 Authentication Methods
+
+The application supports two methods for authenticating with the Google AI services, selectable from the UI:
+
+* **API Key (Default)**: The application uses the `API_KEY` configured in the `.env` file (for local development) or via Secret Manager (for Cloud Run). This is the simplest method for a deployed environment.
+
+* **gcloud Access Token**: Users can provide their own GCP Project ID and a temporary access token (obtained by running `gcloud auth print-access-token`). The backend will use this token to make calls to the Vertex AI API on behalf of the user. This is useful for users who want to use their own GCP project for billing and logging.
+
+## ⚠️ Disclaimer
+
+This repository is for demonstrative purposes only and is not an officially supported Google product.
+
+## 📜 License
+
+This project is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for the full license text.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to report bugs, suggest enhancements, or submit pull requests.
