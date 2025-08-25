@@ -2,7 +2,7 @@
 
 [![GitHub license](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
-V-Start is an experimental toolkit that helps users easily and quickly create effective prompts for Veo and evaluate how well generated videos align with their intended prompts. The main goal is to simplify the process of creating high-quality videos with Veo.
+V-Start is an experimental toolkit that helps users easily and quickly create effective prompts for [Veo](https://deepmind.google/models/veo/) and evaluate how well generated videos align with their intended prompts. The main goal is to simplify the process of creating high-quality videos with Veo.
 
 <img src="./data/V-Start.png" alt="V-Start Application Screenshot" width="700">
 
