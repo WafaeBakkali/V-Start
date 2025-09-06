@@ -17,49 +17,17 @@
 import { callGeminiApi } from '../api.js';
 import { showToast, copyToClipboard } from '../ui.js';
 
-// --- HTML TEMPLATE ---
-
-export function getTimelineContent() {
-    return `
-        <div id="timeline-content">
-            <section id="timeline">
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8">
-                    <h3 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Timeline Prompting</h3>
-                    <p class="text-gray-600 dark:text-gray-400 mb-6">Define what happens at specific moments in your 8-second video. The AI will enhance your descriptions into a cinematic timeline.</p>
-                    
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">8-Second Timeline</label>
-                        <div id="timeline-visualizer" class="w-full h-8 bg-gray-200 dark:bg-gray-700 rounded-lg flex overflow-hidden border border-gray-300 dark:border-gray-600"></div>
-                    </div>
-
-                    <div id="timeline-segments-container" class="space-y-4"></div>
-
-                    <div class="mt-4">
-                        <button id="add-timeline-segment-btn" class="w-full flex items-center justify-center bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
-                            Add Segment
-                        </button>
-                    </div>
-
-                    <div class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
-                        <button id="generate-timeline-prompt-btn" class="w-full flex items-center justify-center bg-indigo-600 text-white py-3 px-4 rounded-lg font-bold hover:bg-indigo-700">
-                            Generate Final Prompt with AI
-                        </button>
-                    </div>
-
-                    <div id="timeline-output-container" class="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hidden">
-                        <div class="flex justify-between items-center mb-2">
-                            <h4 class="font-semibold text-indigo-700 dark:text-indigo-400">AI-Generated Timeline Prompt:</h4>
-                            <button onclick="window.copyToClipboard('timeline-output')" class="p-1 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-md" title="Copy Prompt">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                            </button>
-                        </div>
-                        <pre><code id="timeline-output" class="text-sm text-gray-800 dark:text-gray-300 bg-white dark:bg-gray-800 p-3 rounded-md block whitespace-pre-wrap border border-gray-200 dark:border-gray-600"></code></pre>
-                    </div>
-                </div>
-            </section>
-        </div>
-    `;
+export async function getTimelineContent() {
+    try {
+        const response = await fetch('/src/features/templates/timeline.html');
+        if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
+        return await response.text();
+    } catch (error) {
+        console.error('Failed to fetch timeline template:', error);
+        return '<div>Error loading content. Please check the console for details.</div>';
+    }
 }
 
 // --- INITIALIZATION AND LOGIC ---
@@ -71,9 +39,11 @@ export function initTimeline() {
     const addSegmentBtn = document.getElementById('add-timeline-segment-btn');
     const segmentsContainer = document.getElementById('timeline-segments-container');
     const generateBtn = document.getElementById('generate-timeline-prompt-btn');
+    const clearBtn = document.getElementById('clear-timeline-btn');
 
     const updateTimelineVisualizer = () => {
         const visualizer = document.getElementById('timeline-visualizer');
+        if (!visualizer) return;
         visualizer.innerHTML = '';
         const segments = Array.from(document.querySelectorAll('.timeline-segment'));
         let totalDuration = 0;
@@ -148,6 +118,14 @@ export function initTimeline() {
         updateTimelineVisualizer();
     };
 
+    const clearAll = () => {
+        segmentsContainer.innerHTML = '';
+        segmentIdCounter = 0;
+        addTimelineSegment(); // Add back one default segment
+        document.getElementById('timeline-output-container').classList.add('hidden');
+        showToast('Timeline cleared!', 'info');
+    };
+
     const generateTimelinePrompt = async () => {
         const segments = Array.from(document.querySelectorAll('.timeline-segment'));
         const segmentData = [];
@@ -181,9 +159,15 @@ export function initTimeline() {
         const originalButtonHtml = generateBtn.innerHTML;
 
         generateBtn.disabled = true;
-        generateBtn.innerHTML = 'Generating...';
+        generateBtn.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Generating...
+        `;
         outputContainer.classList.remove('hidden');
-        outputElement.textContent = 'Asking AI to create a cinematic timeline...';
+        outputElement.textContent = 'Creating a cinematic timeline...';
         
         try {
             const systemPrompt = `You are an expert video prompt engineer. Your task is to take a series of timeline segments with simple descriptions and enhance them into a cinematic, ready-to-use prompt.
@@ -223,7 +207,9 @@ ${JSON.stringify(segmentData, null, 2)}`;
     // --- Attach Event Listeners ---
     addSegmentBtn.addEventListener('click', addTimelineSegment);
     generateBtn.addEventListener('click', generateTimelinePrompt);
+    clearBtn.addEventListener('click', clearAll);
 
     // Add the first segment by default
     addTimelineSegment();
 }
+

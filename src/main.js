@@ -7,7 +7,7 @@
  *
  * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable lawstall or agreed to in writing, software
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
@@ -120,7 +120,8 @@ function initDarkMode() {
     console.log(`Theme system initialized. Current theme: ${currentTheme} (defaults to light mode)`);
 }
 
-function showMainTab(tabName) {
+// This function is async to handle fetching HTML templates.
+async function showMainTab(tabName) {
     const feature = tabs[tabName];
     if (!feature) {
         console.warn(`Tab ${tabName} not found`);
@@ -130,8 +131,8 @@ function showMainTab(tabName) {
     // Show/hide auth section based on feature needs
     authSectionContainer.style.display = feature.needsAuth ? 'block' : 'none';
     
-    // Load tab content
-    mainContent.innerHTML = feature.getContent();
+    // Load tab content asynchronously.
+    mainContent.innerHTML = await feature.getContent();
     feature.init();
 
     // Update active tab styling
@@ -151,41 +152,65 @@ function showMainTab(tabName) {
     console.log(`Switched to ${tabName} tab`);
 }
 
+// Fast validation using Gemini Flash model
 async function validateAccessToken() {
     const accessToken = document.getElementById('access-token-input').value;
     const projectId = document.getElementById('project-id-input').value;
+    const location = document.getElementById('location-input')?.value || 'us-central1';
     const statusElement = document.getElementById('access-token-status');
     const validateBtn = document.getElementById('validate-token-btn');
+    const authMethod = document.getElementById('auth-method-select').value;
 
+    // For API key mode, just do client-side check
+    if (authMethod === 'api-key') {
+        statusElement.textContent = '✅ Using server API key. Ready to generate!';
+        statusElement.className = 'text-xs mt-2 h-4 text-blue-600 dark:text-blue-400';
+        validateBtn.textContent = '✓ API Key Mode';
+        setTimeout(() => {
+            validateBtn.textContent = 'Validate';
+        }, 2000);
+        return;
+    }
+
+    // For access token mode, check fields first
     if (!projectId || !accessToken) {
         statusElement.textContent = 'Project ID and Token are required.';
         statusElement.className = 'text-xs mt-2 h-4 text-red-600 dark:text-red-400';
         return;
     }
 
-    // Show loading state
+    // Show loading state (should be quick with Flash)
     validateBtn.disabled = true;
     validateBtn.textContent = 'Validating...';
     validateBtn.classList.add('loading');
-    statusElement.textContent = '';
+    statusElement.textContent = 'Checking credentials...';
+    statusElement.className = 'text-xs mt-2 h-4 text-gray-500 dark:text-gray-400';
     
     try {
         const response = await fetch('/api/validate-token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId, accessToken })
+            body: JSON.stringify({ projectId, accessToken, location })  
         });
         
         const result = await response.json();
         
         if (result.valid) {
-            statusElement.textContent = result.message;
+            statusElement.textContent = '✅ ' + result.message;
             statusElement.className = 'text-xs mt-2 h-4 text-green-600 dark:text-green-400';
-            showNotification('Token validation successful!', 'success');
+            validateBtn.textContent = '✓ Validated';
+            validateBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            showNotification(`Token validated for ${location}!`, 'success');
+            
+            setTimeout(() => {
+                validateBtn.textContent = 'Validate';
+                validateBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            }, 3000);
         } else {
-            statusElement.textContent = `Invalid: ${result.message}`;
+            statusElement.textContent = `❌ ${result.message}`;
             statusElement.className = 'text-xs mt-2 h-4 text-red-600 dark:text-red-400';
-            showNotification('Token validation failed', 'error');
+            validateBtn.textContent = 'Retry';
+            showNotification('Validation failed', 'error');
         }
     } catch (error) {
         console.error('Token validation error:', error);
@@ -195,7 +220,9 @@ async function validateAccessToken() {
     } finally {
         // Reset button state
         validateBtn.disabled = false;
-        validateBtn.textContent = 'Validate';
+        if (validateBtn.textContent === 'Validating...') {
+            validateBtn.textContent = 'Validate';
+        }
         validateBtn.classList.remove('loading');
     }
 }

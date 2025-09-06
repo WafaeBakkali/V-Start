@@ -2,7 +2,9 @@
 
 [![GitHub license](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
-V-Start is an experimental toolkit that helps users easily and quickly create effective prompts for [Veo](https://deepmind.google/models/veo/) and evaluate how well generated videos align with their intended prompts. The main goal is to simplify the process of creating high-quality videos with Veo.
+**Author: [Wafae Bakkali](https://github.com/WafaeBakkali)**
+
+V-Start is an experimental toolkit that helps users easily and quickly create effective prompts for Veo and evaluate how well generated videos align with their intended prompts. The main goal is to simplify the process of creating high-quality videos with Veo.
 
 <img src="./data/V-Start.png" alt="V-Start Application Screenshot" width="700">
 
@@ -33,7 +35,105 @@ V-Start is divided into two main categories: Prompting and Evaluation.
 
 The repository is organized as follows:
 
-<img src="./data/repo.png" alt="V-Start Project Structure" width="700">
+```none
+/
+├── .env.example       # Example environment file for new contributors
+├── .gitignore         # Specifies files to be ignored by Git
+├── CONTRIBUTING.md    # Guidelines for contributing to the project
+├── Dockerfile         # Defines the Docker container for the application
+├── index.html         # The main HTML file for the single-page application
+├── LICENSE            # The Apache 2.0 open-source license for the project
+├── package.json       # Lists project dependencies and scripts
+├── package-lock.json  # Records exact versions of dependencies
+├── README.md          # The project's readme file
+├── server.js          # The Node.js/Express backend server
+├── style.css          # Main stylesheet for the application
+│
+├── data/              # Contains static data and assets
+│   ├── V-Start.png      # Screenshot of the application UI
+│   └── veo-youtube-study.json # Data for the A/B evaluation study
+│
+└── src/               # Contains all frontend JavaScript source code
+    ├── api.js         # Handles the fetch call to the backend Gemini API
+    ├── main.js        # The main entry point for the frontend application logic
+    ├── ui.js          # Contains UI helper functions (e.g., notifications, toast:
+    │
+    ├── features/      # Each file represents a major feature/tab in the UI
+    │   ├── alignment-eval.js
+    │   ├── converter.js
+    │   ├── enhancer.js
+    │   ├── eval.js
+    │   ├── gallery.js
+    │   ├── generator.js
+    │   └── timeline.js
+    │
+    └── templates/     # Contains the HTML templates for each feature
+        ├── alignment-eval.html
+        ├── converter.html
+        ├── enhancer.html
+        ├── eval.html
+        ├── gallery.html
+        ├── generator.html
+        └── timeline.html
+```
+
+## Authentication Setup
+
+V-Start supports two authentication methods for flexibility:
+
+### Method 1: Google Cloud Access Token
+
+This method uses your own Google Cloud Project.
+
+1. **Set up a Google Cloud Project:**
+   - Go to the [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select an existing one
+   - Enable billing for your project
+
+2. **Enable required APIs:**
+   ```bash
+   # Set your project ID
+   export PROJECT_ID="your-gcp-project-id"
+   gcloud config set project $PROJECT_ID
+
+   # Enable Vertex AI API
+   gcloud services enable aiplatform.googleapis.com
+   ```
+
+3. **Install and authenticate gcloud CLI:**
+   - Install the [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
+   - Authenticate with your Google account:
+     ```bash
+     gcloud auth login
+     ```
+   - Set your default project:
+     ```bash
+     gcloud config set project $PROJECT_ID
+     ```
+
+4. **Get your access token:**
+   ```bash
+   gcloud auth print-access-token
+   ```
+
+   **Note:** Access tokens expire after 1 hour. You'll need to run this command again to get a new token when it expires.
+
+5. **Use in V-Start:**
+   - In the V-Start UI, select "gcloud Access Token" as your authentication method
+   - Enter your Project ID and the access token from step 4
+
+### Method 2: Google AI Studio API Key
+
+1. **Get your API Key:**
+   - Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
+   - Sign in with your Google account
+   - Click "Create API Key"
+   - Choose "Create API key in new project" or select an existing project
+   - Copy the generated API key
+
+2. **Configure the application:**
+   - Add the API key to your `.env` file (see Installation section below)
+   - In the V-Start UI, select "API Key" as your authentication method
 
 ## 🚀 Getting Started (Local Development)
 
@@ -43,36 +143,46 @@ Follow these instructions to get a copy of the project up and running on your lo
 
 * [Node.js](https://nodejs.org/) (v18 or later recommended)
 * npm (usually comes with Node.js)
-* A Google Gemini API Key. You can get one from [Google AI Studio](https://aistudio.google.com/app/apikey).
+* Authentication setup (see Authentication Setup section above)
 
 ### Installation
 
 1.  **Clone the repository:**
+
     ```bash
-    git clone https://github.com/WafaeBakkali/V-Start.git
-    cd V-Start
+    git clone https://github.com/GoogleCloudPlatform/generative-ai.git
+    cd vision/sample-apps/V-Start
     ```
 
 2.  **Install NPM packages:**
+
     ```bash
     npm install
     ```
 
 3.  **Set up your environment variables:**
     Create a file named `.env` in the root of the project by copying the example file.
+
     ```bash
     cp .env.example .env
     ```
-    Now, open the `.env` file and add your Gemini API Key.
+
+    Open the `.env` file and add your Gemini API Key (if using Method 2):
+    ```
+    API_KEY=your_gemini_api_key_here
+    ```
+
+    **Note:** If you're only using the Access Token method, you can leave the API_KEY empty.
 
 4.  **Run the server:**
+
     ```bash
     npm start
     ```
 
 5.  Open your browser and navigate to `http://localhost:8080`.
 
-## ☁️ Deployment to Cloud Run 
+## ☁️ Deployment to Cloud Run
 
 The recommended way to deploy this application is directly from source to Google Cloud Run, secured with Identity-Aware Proxy (IAP). When you deploy from source, Cloud Build automatically uses the `Dockerfile` in your repository to build and deploy your container.
 
@@ -128,19 +238,7 @@ After deploying, make sure to enforce IAP by granting access permissions to auth
 
 **Official Guide**: [Securing Cloud Run services with IAP](https://cloud.google.com/iap/docs/enabling-cloud-run)
 
-## 🔐 Authentication Methods
-
-The application supports two methods for authenticating with the Google AI services, selectable from the UI:
-
-* **API Key (Default)**: The application uses the `API_KEY` configured in the `.env` file (for local development) or via Secret Manager (for Cloud Run). This is the simplest method for a deployed environment.
-
-* **gcloud Access Token**: Users can provide their own GCP Project ID and a temporary access token (obtained by running `gcloud auth print-access-token`). The backend will use this token to make calls to the Vertex AI API on behalf of the user. This is useful for users who want to use their own GCP project for billing and logging.
-
-## ⚠️ Disclaimer
-
-This repository is for demonstrative purposes only and is not an officially supported Google product.
-
-## 📜 License
+## License
 
 This project is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for the full license text.
 
