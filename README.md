@@ -77,9 +77,61 @@ The repository is organized as follows:
         └── timeline.html
 ```
 
-## Authentication Setup
+## 🚀 Try It Now
 
-V-Start supports two authentication methods for flexibility:
+**Public URL: [https://v-start-604101121820.us-central1.run.app/](https://v-start-604101121820.us-central1.run.app/)**
+
+The public instance is rate-limited to 50 requests per hour per IP address. For unlimited usage, deploy your own instance (see Deployment section below).
+
+## ☁️ Deployment to Cloud Run
+
+The recommended way to deploy this application is directly from source to Google Cloud Run. When you deploy from source, Cloud Build automatically uses the Dockerfile in your repository to build and deploy your container.
+
+### Prerequisites
+
+* A Google Cloud Project with billing enabled.
+* The [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) (gcloud CLI) installed and authenticated.
+
+### Deployment Steps
+
+1. **Set your project ID:**
+   ```bash
+   export PROJECT_ID="your-gcp-project-id"
+   gcloud config set project $PROJECT_ID
+   ```
+
+2. **Enable required services:**
+   ```bash
+   gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
+   ```
+
+3. **Deploy the application:**
+   ```bash
+   gcloud run deploy v-start \
+     --source . \
+     --region us-central1 \
+     --allow-unauthenticated \
+     --max-instances 2 \
+     --memory 256Mi \
+     --cpu 0.5 \
+     --clear-env-vars
+   ```
+   **Important:** The `--clear-env-vars` flag ensures no API keys are deployed with the service. Users will provide their own keys through the UI.
+
+4. **Get your service URL:**
+   ```bash
+   gcloud run services describe v-start --region us-central1 --format 'value(status.url)'
+   ```
+
+5. **Grant Access Permissions:**
+   
+   After deploying, make sure to enforce IAP by granting access permissions to authorized users or groups. For detailed instructions, please follow the official documentation.
+   
+   **Official Guide**: [Securing Cloud Run services with IAP](https://cloud.google.com/iap/docs/enabling-cloud-run)
+
+## 🔐 Authentication Setup
+
+V-Start supports two authentication methods for flexibility. **Users must provide their own API keys through the UI. Keys are never stored on the server.**
 
 ### Method 1: Google Cloud Access Token
 
@@ -126,11 +178,11 @@ This method uses your own Google Cloud Project.
    - Choose "Create API key in new project" or select an existing project
    - Copy the generated API key
 
-2. **Configure the application:**
-   - Add the API key to your .env file (see Installation section below)
+2. **Use in V-Start:**
    - In the V-Start UI, select "API Key" as your authentication method
+   - Enter your API key (it will be used directly for API calls, never stored)
 
-## 🚀 Getting Started (Local Development)
+## 🚀 Local Development
 
 Follow these instructions to get a copy of the project up and running on your local machine.
 
@@ -153,7 +205,7 @@ Follow these instructions to get a copy of the project up and running on your lo
    npm install
    ```
 
-3. **Set up your environment variables:**
+3. **Set up your environment variables (optional for local development):**
    Create a file named `.env` in the root of the project by copying the example file.
    ```bash
    cp .env.example .env
@@ -162,7 +214,7 @@ Follow these instructions to get a copy of the project up and running on your lo
    ```
    API_KEY=your_gemini_api_key_here
    ```
-   **Note:** If you're only using the Access Token method, you can leave the API_KEY empty.
+   **Note:** This is optional for local development convenience. You can also provide the API key through the UI. Never deploy with API keys in environment variables.
 
 4. **Run the server:**
    ```bash
@@ -171,60 +223,9 @@ Follow these instructions to get a copy of the project up and running on your lo
 
 5. Open your browser and navigate to `http://localhost:8080`.
 
-## ☁️ Deployment to Cloud Run
-
-The recommended way to deploy this application is directly from source to Google Cloud Run, secured with Identity-Aware Proxy (IAP). When you deploy from source, Cloud Build automatically uses the Dockerfile in your repository to build and deploy your container.
-
-### Prerequisites
-
-* A Google Cloud Project with billing enabled.
-* The [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) (gcloud CLI) installed and authenticated.
-* Project ID already configured (see Authentication Setup section above)
-
-### Step 1: Enable Required Services
-
-```bash
-# Enable required services (using the PROJECT_ID from Authentication Setup)
-gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com iap.googleapis.com
-```
-
-### Step 2: Secure Your API Key
-
-Store your Gemini API key in Secret Manager.
-
-```bash
-# Create the secret
-gcloud secrets create gemini-api-key --replication-policy="automatic"
-
-# Add your API key value to the secret
-printf "your_gemini_api_key_here" | gcloud secrets versions add gemini-api-key --data-file=-
-```
-
-### Step 3: Configure OAuth Consent Screen
-
-This is required for IAP. In the Google Cloud Console, navigate to **APIs & Services → OAuth consent screen** and complete the setup wizard.
-
-### Step 4: Deploy the Service
-
-Deploy the application as a private service.
-
-```bash
-gcloud run deploy veo-start-app \
-  --source . \
-  --region us-central1 \
-  --no-allow-unauthenticated \
-  --set-env-vars="API_KEY=sm://${PROJECT_ID}/gemini-api-key/latest"
-```
-
-### Step 5: Grant Access Permissions
-
-After deploying, make sure to enforce IAP by granting access permissions to authorized users or groups. For detailed instructions, please follow the official documentation.
-
-**Official Guide**: [Securing Cloud Run services with IAP](https://cloud.google.com/iap/docs/enabling-cloud-run)
-
 ## License
 
-This project is licensed under the Apache License, Version 2.0. See the [LICENSE](https://github.com/WafaeBakkali/V-Start/blob/main/LICENSE) file for the full license text.
+This project is licensed under the Apache License, Version 2.0. See the [LICENSE](https://github.com/GoogleCloudPlatform/generative-ai/blob/main/vision/sample-apps/V-Start/LICENSE) file for the full license text.
 
 ## 🤝 Contributing
 
