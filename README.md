@@ -129,6 +129,46 @@ The recommended way to deploy this application is directly from source to Google
    
    **Official Guide**: [Securing Cloud Run services with IAP](https://cloud.google.com/iap/docs/enabling-cloud-run)
 
+## 🚀 Local Development
+
+Follow these instructions to get a copy of the project up and running on your local machine.
+
+### Prerequisites
+
+* [Node.js](https://nodejs.org/) (v18 or later recommended)
+* npm (usually comes with Node.js)
+* Authentication setup (see Authentication Setup section above)
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/GoogleCloudPlatform/generative-ai.git
+   cd vision/sample-apps/V-Start
+   ```
+
+2. **Install NPM packages:**
+   ```bash
+   npm install
+   ```
+
+3. **Set up your environment variables (optional for local development):**
+   Create a file named `.env` in the root of the project by copying the example file.
+   ```bash
+   cp .env.example .env
+   ```
+   Open the `.env` file and add your Gemini API Key (if using Method 2):
+   ```
+   API_KEY=your_gemini_api_key_here
+   ```
+   **Note:** This is optional for local development convenience. You can also provide the API key through the UI. Never deploy with API keys in environment variables.
+
+4. **Run the server:**
+   ```bash
+   npm start
+   ```
+5. Open your browser and navigate to `http://localhost:8080`.
+
 ## 🔐 Authentication Setup
 
 V-Start supports two authentication methods for flexibility. **Users must provide their own API keys through the UI. Keys are never stored on the server.**
@@ -181,47 +221,6 @@ This method uses your own Google Cloud Project.
 2. **Use in V-Start:**
    - In the V-Start UI, select "API Key" as your authentication method
    - Enter your API key (it will be used directly for API calls, never stored)
-
-## 🚀 Local Development
-
-Follow these instructions to get a copy of the project up and running on your local machine.
-
-### Prerequisites
-
-* [Node.js](https://nodejs.org/) (v18 or later recommended)
-* npm (usually comes with Node.js)
-* Authentication setup (see Authentication Setup section above)
-
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/GoogleCloudPlatform/generative-ai.git
-   cd vision/sample-apps/V-Start
-   ```
-
-2. **Install NPM packages:**
-   ```bash
-   npm install
-   ```
-
-3. **Set up your environment variables (optional for local development):**
-   Create a file named `.env` in the root of the project by copying the example file.
-   ```bash
-   cp .env.example .env
-   ```
-   Open the `.env` file and add your Gemini API Key (if using Method 2):
-   ```
-   API_KEY=your_gemini_api_key_here
-   ```
-   **Note:** This is optional for local development convenience. You can also provide the API key through the UI. Never deploy with API keys in environment variables.
-
-4. **Run the server:**
-   ```bash
-   npm start
-   ```
-
-5. Open your browser and navigate to `http://localhost:8080`.
 
 ## License
 
