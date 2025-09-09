@@ -225,7 +225,7 @@ Follow these instructions to get a copy of the project up and running on your lo
 
 ## License
 
-This project is licensed under the Apache License, Version 2.0. See the [LICENSE](https://github.com/GoogleCloudPlatform/generative-ai/blob/main/vision/sample-apps/V-Start/LICENSE) file for the full license text.
+This project is licensed under the Apache License, Version 2.0. See the [LICENSE](https://github.com/WafaeBakkali/V-Start/blob/main/LICENSE) file for the full license text.
 
 ## 🤝 Contributing
 
